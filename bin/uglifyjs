@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --max-stack-size=8388608
 // -*- js -*-
 
 global.sys = require(/^v0\.[012]/.test(process.version) ? "sys" : "util");
@@ -25,6 +25,14 @@ var options = {
         reserved_names: null,
         defines: { },
         lift_vars: false,
+        maul: false,
+        maul_options: {
+            debug: false,
+            input_symbol_list_path:  null,
+            output_symbol_list_path: null,
+            ignore_list_path: null,
+            make_ignore_list_path: null,
+        },
         codegen_options: {
                 ascii_only: false,
                 beautify: false,
@@ -193,6 +201,24 @@ out: while (args.length > 0) {
             case "--inline-script":
                 options.codegen_options.inline_script = true;
                 break;
+            case "--maul":
+                options.maul = true;
+                break;
+            case "--maul-debug":
+                options.maul_options.debug = true;
+                break;
+            case "--maul-input-symbol-list":
+                options.maul_options.input_symbol_list_path = args.shift();
+                break;
+            case "--maul-output-symbol-list":
+                options.maul_options.output_symbol_list_path = args.shift();
+                break;
+            case "--maul-ignore-list":
+                options.maul_options.ignore_list_path = args.shift();
+                break;
+            case "--maul-make-ignore-list":
+                options.maul_options.make_ignore_list_path = args.shift();
+                break;
             default:
                 filename = v;
                 break out;
@@ -290,6 +316,10 @@ function squeeze_it(code) {
                 if (options.lift_vars) {
                         ast = time_it("lift", function(){ return pro.ast_lift_variables(ast); });
                 }
+                if (options.maul) ast = time_it("maul", function(){
+                        options.maul_options.defines = options.defines;
+                        return pro.ast_maul(ast, options.maul_options);
+                });
                 if (options.mangle) ast = time_it("mangle", function(){
                         return pro.ast_mangle(ast, {
                                 toplevel     : options.mangle_toplevel,
