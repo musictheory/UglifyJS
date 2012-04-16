@@ -18,4 +18,9 @@ In visual form, the dependency tree looks like this:
 
 Google's Closure Compiler requires that manual exports and imports be set up between each module.  This was not acceptable for our needs.
 
-Enter the Mauler addition to UglifyJS.  
+Enter the Mauler addition to UglifyJS.  When `--maul` is specified as a command-line option to `uglifyjs`, `ast_maul` is ran on the AST prior to `ast_mangle`.  Maul performs the following transformations:
+
+1) All names are transformed to a (hopefully shorter) mauled name form consisting of `[A-Z]`, followed by `[A-Za-z_$]?`.  This affects  function names, variable names, dot-syntax references, and object literal keys.
+2) The mapping of name to mauled name is global and persistent.  Once the name `Foo` is mapped to the mauled `Aa`, all references of `Foo`, regardless of scope, become `Aa`.  `Aa` will never be reused for another name.
+3) **Mappings may be shared among modules using  `--maul-input-symbol-list` and `--maul-output-symbol-list`.**
+4) Like Closure, string literals are never changed.  Refer to (Inconsistent Property Names)[https://developers.google.com/closure/compiler/docs/api-tutorial3#propnames] for more information.
