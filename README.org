@@ -5,6 +5,8 @@
 #+AUTHOR: Mihai Bazon
 #+EMAIL: mihai.bazon@gmail.com
 
+* [[https://github.com/musictheory/UglifyJS/wiki/musictheory.net-Changes][musictheory.net changes to UglifyJS]] 
+
 * UglifyJS --- a JavaScript parser/compressor/beautifier
 
 This package implements a general-purpose JavaScript
