@@ -282,7 +282,10 @@ function output(text) {
         if (options.state_path) {
             fs.writeFileSync(options.state_path, JSON.stringify(options.state));
         }
-        out.write(text.replace(/;*$/, ";"));
+        if (!options.ast && (options.maul != "make")) {
+            text = text.replace(/;*$/, ";");
+        }
+        out.write(text);
         if (options.output !== true) {
                 out.end();
         }
