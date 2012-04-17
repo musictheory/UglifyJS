@@ -24,15 +24,11 @@ var options = {
         unsafe: false,
         reserved_names: null,
         defines: { },
+        state: { },
+        state_path: null,
         lift_vars: false,
         maul: false,
-        maul_options: {
-            debug: false,
-            input_symbol_list_path:  null,
-            output_symbol_list_path: null,
-            ignore_list_path: null,
-            make_ignore_list_path: null,
-        },
+        randomize_names: false,
         codegen_options: {
                 ascii_only: false,
                 beautify: false,
@@ -116,6 +112,9 @@ out: while (args.length > 0) {
                 break;
             case "--reserved-names":
                 options.reserved_names = args.shift().split(",");
+                break;
+            case "--reserved-names-from-file":
+                options.reserved_names = fs.readFileSync(args.shift(), "utf8").split(/[, \t\n]/);
                 break;
             case "--lift-vars":
                 options.lift_vars = true;
@@ -201,23 +200,23 @@ out: while (args.length > 0) {
             case "--inline-script":
                 options.codegen_options.inline_script = true;
                 break;
+            case "--input-state-file":
+                options.state = JSON.parse(fs.readFileSync(args.shift(), "utf8"))
+                break;
+            case "--output-state-file":
+                options.state_path = args.shift();
+                break;
+            case "--randomize-names":
+                options.randomize_names = true;
+                break;
             case "--maul":
                 options.maul = true;
                 break;
             case "--maul-debug":
-                options.maul_options.debug = true;
+                options.maul = "debug";
                 break;
-            case "--maul-input-symbol-list":
-                options.maul_options.input_symbol_list_path = args.shift();
-                break;
-            case "--maul-output-symbol-list":
-                options.maul_options.output_symbol_list_path = args.shift();
-                break;
-            case "--maul-ignore-list":
-                options.maul_options.ignore_list_path = args.shift();
-                break;
-            case "--maul-make-ignore-list":
-                options.maul_options.make_ignore_list_path = args.shift();
+            case "--maul-make-reserved-names":
+                options.maul = "make";
                 break;
             default:
                 filename = v;
@@ -280,6 +279,9 @@ function output(text) {
                         mode: 0644
                 });
         }
+        if (options.state_path) {
+            fs.writeFileSync(options.state_path, JSON.stringify(options.state));
+        }
         out.write(text.replace(/;*$/, ";"));
         if (options.output !== true) {
                 out.end();
@@ -317,15 +319,26 @@ function squeeze_it(code) {
                         ast = time_it("lift", function(){ return pro.ast_lift_variables(ast); });
                 }
                 if (options.maul) ast = time_it("maul", function(){
-                        options.maul_options.defines = options.defines;
-                        return pro.ast_maul(ast, options.maul_options);
+                        return pro.ast_maul(ast, {
+                            debug         : (options.maul === "debug"),
+                            make_reserved : (options.maul === "make"),
+                            defines       : options.defines,
+                            except        : options.reserved_names,
+                            state         : options.state,
+                            randomize     : options.randomize_names
+                        });
                 });
+                if (options.maul == "make") {
+                    return ast; // In this case, the ast is actually a string of the reserved list
+                }
                 if (options.mangle) ast = time_it("mangle", function(){
                         return pro.ast_mangle(ast, {
                                 toplevel     : options.mangle_toplevel,
                                 defines      : options.defines,
                                 except       : options.reserved_names,
-                                no_functions : options.no_mangle_functions
+                                no_functions : options.no_mangle_functions,
+                                state        : options.state,
+                                randomize    : options.randomize_names
                         });
                 });
                 if (options.squeeze) ast = time_it("squeeze", function(){
