@@ -243,7 +243,7 @@ if (options.make) {
         options.out_same_file = false; // doesn't make sense in this case
         var makefile = JSON.parse(fs.readFileSync(filename || "Makefile.uglify.js").toString());
         output(makefile.files.map(function(file){
-                var code = fs.readFileSync(file.name);
+                var code = fs.readFileSync(file.name).toString();
                 if (file.module) {
                         code = "!function(exports, global){global = this;\n" + code + "\n;this." + file.module + " = exports;}({})";
                 }
@@ -346,8 +346,9 @@ function squeeze_it(code) {
                 if (options.maul == "make") {
                     return ast; // In this case, the ast is actually a string of the reserved list
                 }
-                if (options.mangle) ast = time_it("mangle", function(){
+                ast = time_it("mangle", function(){
                         return pro.ast_mangle(ast, {
+                                mangle       : options.mangle,
                                 toplevel     : options.mangle_toplevel,
                                 defines      : options.defines,
                                 except       : options.reserved_names,
