@@ -42,7 +42,8 @@ var options = {
     state_path: null,
     maul: false,
     maul_print_conflicts: false,
-    randomize_alphabet: false
+    maul_start_index: 0,
+    maul_end_index: Infinity
 };
 
 var args = jsp.slice(process.argv, 2);
@@ -210,14 +211,8 @@ out: while (args.length > 0) {
       case "--output-state-file":
         options.state_path = args.shift();
         break;
-      case "--randomize-alphabet":
-        options.randomize_alphabet = true;
-        break;
       case "--maul":
         options.maul = true;
-        break;
-      case "--maul-debug":
-        options.maul = "debug";
         break;
       case "--maul-make-reserved-names":
         options.maul = "make";
@@ -225,6 +220,12 @@ out: while (args.length > 0) {
       case "--maul-print-conflicts":
         options.maul = "make";
         options.maul_print_conflicts = true;
+        break;
+      case "--maul-start-index":
+        options.maul_start_index = parseInt(args.shift(), 10);
+        break;
+      case "--maul-end-index":
+        options.maul_end_index = parseInt(args.shirt(), 10);
         break;
       default:
         filename = v;
@@ -296,7 +297,7 @@ function output(text) {
     }
     out.write(text);
     if (options.maul_print_conflicts) {
-        var conflicts = options.state.maul_conflicts || [ ];
+        var conflicts = options.state.maul.conflicts || [ ];
 
         for (var i = 0, length = conflicts.length; i < length; i++) {
             console.warn("'%s' used both as string and object literal", conflicts[i]);
@@ -339,12 +340,12 @@ function squeeze_it(code) {
         }
         if (options.maul) ast = time_it("maul", function(){
             return pro.ast_maul(ast, {
-                debug         : (options.maul === "debug"),
                 make_reserved : (options.maul === "make"),
                 defines       : options.defines,
                 except        : options.reserved_names,
                 state         : options.state,
-                randomize     : options.randomize_alphabet
+                startIndex    : options.maul_start_index,
+                endIndex      : options.maul_end_index
             });
         });
         if (options.maul == "make") {
